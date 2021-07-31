@@ -1,24 +1,63 @@
 #include "controller.h"
+#include "kb.h"
 
 /* Plant Control Task */
 void PlantControlTask( void *pvParameters ){
 
 }
 
+/*
+-----------------------------------------------------------------------------------------
+*/
+
 /* Web Server Task */
 void WebServerTask( void *pvParameters ){
 
 }
+
+/*
+-----------------------------------------------------------------------------------------
+*/
 
 /* RS232 Task */
 void RS232Task( void *pvParameters ){
 
 }
 
+/*
+-----------------------------------------------------------------------------------------
+*/
+
 /* Keypad Scan Task */
 void KeyScanTask( void *pvParmeters ){
+    char Key;
+    TickType_t xLastWakeTime;
 
+    xLastWakeTime = xTaskGetTickCount();
+
+    for( ;; )
+    {
+        // Wait for the next cycle.
+        vTaskDelayUntil( &xLastWakeTime, DELAY_PERIOD_KP );
+        
+        // Scan the keyboard.
+        if(kbhit()){
+            fflush(stdout);
+
+            Key = getchar();
+            UpdateDisplay( Key );
+        }
+    }
 }
+
+void UpdateDisplay( char Key ){
+    printf("\nChar received:%c\n", Key);
+    printf("Done.\n");
+}
+
+/*
+-----------------------------------------------------------------------------------------
+*/
 
 /* LED Task */
 void LEDTask( void *pvParmeters ){
@@ -55,7 +94,7 @@ int FlashLED( int led ){
         printf("\r*** LED GREEN ****\n");
     }
     else {
-        printf("\r**** LED RED ****\\n");
+        printf("\r**** LED RED ****\n");
     }
 
     xLastWakeTime = xTaskGetTickCount();
@@ -65,3 +104,6 @@ int FlashLED( int led ){
         printf("\tstatus LED ---> HIGH\n");
     }
 }
+/*
+-----------------------------------------------------------------------------------------
+*/
