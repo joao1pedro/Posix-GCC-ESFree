@@ -14,6 +14,12 @@
 #define GREEN                   0
 #define RED                     1
 
+/* Web Server */
+#define HTTP_REQUEST_PROC_LOAD  5
+
+/* PDA */
+#define RS232_CHAR_PROC_LOAD    5
+
 #include "scheduler.h"
 #include <stdbool.h>
 #include <time.h>

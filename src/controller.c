@@ -11,11 +11,15 @@ QueueHandle_t xRS232Queue;
 
 TickType_t idleTask = 0;
 
+struct {
+    int Data1, Data2;
+} Data; 
+
 /* Plant Control Task */
 void PlantControlTask( void *pvParameters ){
     TickType_t xLastWakeTime;
-    int Data1, Data2 ,sendData1, sendData2;
-
+    //int Data1, Data2 ,sendData1, sendData2;
+    int sendData1, sendData2;
 
     /* Queue init */
     xQueue1 = xQueueCreate( 10, sizeof( int ) );
@@ -40,8 +44,8 @@ void PlantControlTask( void *pvParameters ){
         vTaskDelayUntil( &xLastWakeTime, CYCLE_RATE_MS );
         
         // Request data from the sensors.
-        Data1 = getSensorValue1();
-        Data2 = getSensorValue1();
+        Data.Data1 = getSensorValue1();
+        Data.Data2 = getSensorValue2();
         
         // D
         if( xQueueReceive( xFieldBusQueue, &sendData1, MAX_COMMS_DELAY ) == pdTRUE )
@@ -50,9 +54,10 @@ void PlantControlTask( void *pvParameters ){
             if( xQueueReceive( xFieldBusQueue, &sendData2, MAX_COMMS_DELAY ) == pdTRUE )
             {
                 //TransmitResults();   
-                xQueueSend( xQueue1, &Data1, MAX_COMMS_DELAY );
-                xQueueSend( xQueue1, &Data2, MAX_COMMS_DELAY ); 
-                //printf("sensor 1: %d, sensor 2: %d\n", Data1, Data2);        
+                xQueueSend( xQueue1, &Data.Data1, MAX_COMMS_DELAY );
+                xQueueSend( xQueue1, &Data.Data2, MAX_COMMS_DELAY ); 
+                
+                //printf("sensor 1: %d, sensor 2: %d\n", Data.Data1, Data.Data2);        
             }
         } else {
             printf("Sensor Queue empty\n");
@@ -74,7 +79,6 @@ int getSensorValue1( void ){
         printf("Queue create error\n");
     }
 
-    
     xQueueSend( xFieldBusQueue, &number, MAX_COMMS_DELAY );
     xQueueSend( xEthernetQueue, &number, MAX_COMMS_DELAY );
     xQueueSend( xRS232Queue, &number, MAX_COMMS_DELAY );
@@ -85,8 +89,7 @@ int getSensorValue1( void ){
 int getSensorValue2( void ){
     srand( (unsigned)time(NULL) );
 
-    int number = rand() % (7000 - 0 + 1) + 0;
-
+    int number = rand() % (7050 - 1025 + 1) + 1025;
 
     if( xFieldBusQueue == NULL )
     {
@@ -94,7 +97,6 @@ int getSensorValue2( void ){
         printf("Queue create error\n");
     }
 
-    
     xQueueSend( xFieldBusQueue, &number, MAX_COMMS_DELAY );
     xQueueSend( xEthernetQueue, &number, MAX_COMMS_DELAY );
     xQueueSend( xRS232Queue, &number, MAX_COMMS_DELAY );
@@ -111,7 +113,7 @@ void WebServerTask( void *pvParameters ){
     int Data;
 
     for( ;; )
-    {
+    { 
         // Block until data arrives.  xEthernetQueue is filled by the
         // Ethernet interrupt service routine.
         if( xQueueReceive( xEthernetQueue, &Data, portMAX_DELAY ) == pdTRUE )
@@ -131,7 +133,9 @@ void ProcessHTTPData( int Data ){
 
 /* RS232 Task */
 void RS232Task( void *pvParameters ){
-    int Data;
+    int Data, count;
+
+    count = 0;
 
     for( ;; )
     {
@@ -145,6 +149,7 @@ void RS232Task( void *pvParameters ){
 }
 
 void ProcessSerialCharacters( int Data ){
+    //printf("\r ********* PDA ******** \n");
     //printf("PDA Received Data --> %d\n", Data);
 }
 
@@ -280,7 +285,7 @@ void vApplicationIdleHook( void ){
 
 void cpuUsage( void *pvParmeters ){
     float cpuUsage = 1 - ((float) idleTask / (float) xTaskGetTickCount());
-    printf("cpu usage: %.2f\n", cpuUsage);
+    printf("cpu usage: %.2f %\n", cpuUsage*100);
     if(cpuUsage > 0.85){
         systemHealth = 1;
     } 
