@@ -1,9 +1,103 @@
 #include "controller.h"
 #include "kb.h"
 
+int statusLED = 1;
+
+QueueHandle_t xQueue1;
+QueueHandle_t xFieldBusQueue;
+/* QueueHandle_t xEthernetQueue;
+QueueHandle_t xRS232Queue; */
+
 /* Plant Control Task */
 void PlantControlTask( void *pvParameters ){
+    TickType_t xLastWakeTime;
+    int Data1, Data2 ,sendData1, sendData2;
 
+
+    /* Queue init */
+    xQueue1 = xQueueCreate( 10, sizeof( int ) );
+
+    if( xQueue1 == NULL )
+    {
+        /* Queue was not created and must not be used. */
+        printf("Queue create error\n");
+    }
+
+    // A
+    xLastWakeTime = xTaskGetTickCount();
+
+    // B
+    for( ;; )
+    {
+        // C
+        vTaskDelayUntil( &xLastWakeTime, CYCLE_RATE_MS );
+        
+        // Request data from the sensors.
+        Data1 = getSensorValue1();
+        Data2 = getSensorValue1();
+        
+        // D
+        if( xQueueReceive( xFieldBusQueue, &sendData1, MAX_COMMS_DELAY ) == pdTRUE )
+        {
+            // E
+            if( xQueueReceive( xFieldBusQueue, &sendData2, MAX_COMMS_DELAY ) == pdTRUE )
+            {
+                //TransmitResults();   
+                xQueueSend( xQueue1, &Data1, MAX_COMMS_DELAY );
+                xQueueSend( xQueue1, &Data2, MAX_COMMS_DELAY ); 
+                printf("sensor 1 : %d, sensor 2: %d\n", Data1, Data2);        
+            }
+        } else {
+            printf("Sensor Queue empty\n");
+        } 
+        
+    }
+    
+    // Will never get here!
+}
+
+int getSensorValue1( void ){
+    srand( (unsigned)time(NULL) );
+
+    int number = rand() % (5000 - 0 + 1) + 0;
+
+    /* Queue init */
+    xFieldBusQueue = xQueueCreate( 10, sizeof( int ) );
+
+    if( xFieldBusQueue == NULL )
+    {
+        /* Queue was not created and must not be used. */
+        printf("Queue create error\n");
+    }
+
+    
+    xQueueSend( xFieldBusQueue, &number, MAX_COMMS_DELAY );
+    /* xQueueSend( xEthernetQueue, &number, MAX_COMMS_DELAY );
+    xQueueSend( xRS232Queue, &number, MAX_COMMS_DELAY ); */
+
+    return number;
+}
+
+int getSensorValue2( void ){
+    srand( (unsigned)time(NULL) );
+
+    int number = rand() % (5000 - 0 + 1) + 0;
+
+    /* Queue init */
+    xFieldBusQueue = xQueueCreate( 10, sizeof( int ) );
+
+    if( xFieldBusQueue == NULL )
+    {
+        /* Queue was not created and must not be used. */
+        printf("Queue create error\n");
+    }
+
+    
+    xQueueSend( xFieldBusQueue, &number, MAX_COMMS_DELAY );
+    /* xQueueSend( xEthernetQueue, &number, MAX_COMMS_DELAY );
+    xQueueSend( xRS232Queue, &number, MAX_COMMS_DELAY ); */
+
+    return number;
 }
 
 /*
@@ -11,18 +105,46 @@ void PlantControlTask( void *pvParameters ){
 */
 
 /* Web Server Task */
-void WebServerTask( void *pvParameters ){
+/* void WebServerTask( void *pvParameters ){
+    int Data;
 
+    for( ;; )
+    {
+        // Block until data arrives.  xEthernetQueue is filled by the
+        // Ethernet interrupt service routine.
+        if( xQueueReceive( xEthernetQueue, &Data, portMAX_DELAY ) == pdTRUE )
+        {
+            ProcessHTTPData( Data );
+        }        
+    }
 }
+
+void ProcessHTTPData( int Data ){
+    printf("Data Received from Web Server -> %d", Data);
+} */
 
 /*
 -----------------------------------------------------------------------------------------
 */
 
 /* RS232 Task */
-void RS232Task( void *pvParameters ){
+/* void RS232Task( void *pvParameters ){
+    int Data;
 
+    for( ;; )
+    {
+        // Block until data arrives.  xRS232Queue is filled by the
+        // RS232 interrupt service routine.
+        if( xQueueReceive( xRS232Queue, &Data, portMAX_DELAY ) == pdTRUE )
+        {
+            ProcessSerialCharacters( Data );
+        }        
+    }
 }
+
+void ProcessSerialCharacters( int Data ){
+    printf("PDA Received Data --> %d", Data);
+} */
 
 /*
 -----------------------------------------------------------------------------------------
@@ -71,11 +193,11 @@ void LEDTask( void *pvParmeters ){
 
         // Flash the appropriate LED.
         if( SystemIsHealthy() == GREEN ){
-            FlashLED( GREEN );
+            FlashLED( GREEN, statusLED );
 
         }
         else {
-            FlashLED( RED );
+            FlashLED( RED, statusLED );
         }
     }
 }
@@ -86,9 +208,9 @@ int SystemIsHealthy( void ){
     */
    return 0;
 }
-int FlashLED( int led ){
+int FlashLED( int led, int status ){
+    const TickType_t xPeriod = pdMS_TO_TICKS( 1000 ) ;
     TickType_t xLastWakeTime;
-    //const TickType_t xFrequency = 1000;
 
     if( led == GREEN ){
         printf("\r*** LED GREEN ****\n");
@@ -99,9 +221,15 @@ int FlashLED( int led ){
 
     xLastWakeTime = xTaskGetTickCount();
     for( ;; ){
-        printf("\tstatus LED ---> LOW\n");
-        vTaskDelayUntil( &xLastWakeTime, 1000/pdMS_TO_TICKS(50) );
-        printf("\tstatus LED ---> HIGH\n");
+        if( status == 1 ) {
+            printf("\tstatus LED ---> HIGH\n");
+            vTaskDelayUntil( &xLastWakeTime, xPeriod );
+            status = 0;
+        } else if( status == 0 ){
+            printf("\tstatus LED ---> LOW\n");
+            vTaskDelayUntil( &xLastWakeTime, xPeriod );
+            status = 1;
+        }
     }
 }
 /*

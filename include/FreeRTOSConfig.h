@@ -33,6 +33,7 @@
 
 /* Memory allocation related definitions. */
 #define configSUPPORT_STATIC_ALLOCATION			0
+#define configSUPPORT_DYNAMIC_ALLOCATION        1
 #define configTOTAL_HEAP_SIZE					( ( size_t ) ( 65 * 1024 ) )
 
 /* Hook function related definitions. */
@@ -43,7 +44,7 @@
 #define configUSE_DAEMON_TASK_STARTUP_HOOK      0
 
 /* Run time and task stats gathering related definitions. */
-#define configGENERATE_RUN_TIME_STATS			0
+#define configGENERATE_RUN_TIME_STATS			1
 //#define configUSE_TRACE_FACILITY				0
 #define configUSE_STATS_FORMATTING_FUNCTIONS	0
 
