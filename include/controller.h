@@ -39,6 +39,10 @@ void ProcessSerialCharacters( int Data );
 /* Keypad Scan Task */
 void KeyScanTask( void *pvParmeters );
 void UpdateDisplay( char Key );
+
+void ecoMode( void );
+void defaultMode( void );
+void turboMode( void );
 /* LED Task */
 void LEDTask( void *pvParmeters );
 int SystemIsHealthy( void );
@@ -46,6 +50,8 @@ int FlashLED( int led, int status );
 /* CPU usage */
 void vApplicationIdleHook( void );
 void cpuUsage( void *pvParmeters );
+
+void initMenu( void );
 
 
 #endif /* CONTROLLER_H */
