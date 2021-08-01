@@ -37,6 +37,9 @@ void UpdateDisplay( char Key );
 void LEDTask( void *pvParmeters );
 int SystemIsHealthy( void );
 int FlashLED( int led, int status );
+/* CPU usage */
+void vApplicationIdleHook( void );
+void cpuUsage( void *pvParmeters );
 
 
 #endif /* CONTROLLER_H */

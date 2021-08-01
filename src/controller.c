@@ -2,11 +2,14 @@
 #include "kb.h"
 
 int statusLED = 1;
+int systemHealth = 0;
 
 QueueHandle_t xQueue1;
 QueueHandle_t xFieldBusQueue;
 QueueHandle_t xEthernetQueue;
 QueueHandle_t xRS232Queue;
+
+TickType_t idleTask = 0;
 
 /* Plant Control Task */
 void PlantControlTask( void *pvParameters ){
@@ -49,7 +52,7 @@ void PlantControlTask( void *pvParameters ){
                 //TransmitResults();   
                 xQueueSend( xQueue1, &Data1, MAX_COMMS_DELAY );
                 xQueueSend( xQueue1, &Data2, MAX_COMMS_DELAY ); 
-                printf("sensor 1 : %d, sensor 2: %d\n", Data1, Data2);        
+                //printf("sensor 1: %d, sensor 2: %d\n", Data1, Data2);        
             }
         } else {
             printf("Sensor Queue empty\n");
@@ -82,7 +85,7 @@ int getSensorValue1( void ){
 int getSensorValue2( void ){
     srand( (unsigned)time(NULL) );
 
-    int number = rand() % (5000 - 0 + 1) + 0;
+    int number = rand() % (7000 - 0 + 1) + 0;
 
 
     if( xFieldBusQueue == NULL )
@@ -176,6 +179,38 @@ void UpdateDisplay( char Key ){
     printf("Done.\n");
 }
 
+void selection(int temp){
+    int selectData;
+
+    for( ;; )
+    {
+        xQueueReceive( xFieldBusQueue, &selectData, MAX_COMMS_DELAY );
+        if(selectData == temp){
+            printf("Found temperature: %d °C.\n", selectData);
+            break;
+        }else{
+            printf("Temperature not found.\n");
+            break;
+        }
+    }
+    
+}
+
+void visualization(QueueHandle_t xQueue){
+    int Data;
+    printf("------------------------------"); 
+    for( ;; ){
+        xQueueReceive( xQueue, &Data, MAX_COMMS_DELAY ); 
+        printf("Temperature : %d ºC.\n", Data);  
+    }
+    printf("------------------------------"); 
+}
+
+void modification(QueueHandle_t xQueue, int temp){
+    xQueueSend( xQueue, &temp, MAX_COMMS_DELAY );
+}
+
+
 /*
 -----------------------------------------------------------------------------------------
 */
@@ -205,7 +240,7 @@ int SystemIsHealthy( void ){
     * TODO: verifica se houve erro de perca de deadline ou sobrecarga de cpu
     *    estiver tudo ok, retorna 0. Se não, retorna 1
     */
-   return 0;
+   return systemHealth;
 }
 int FlashLED( int led, int status ){
     const TickType_t xPeriod = pdMS_TO_TICKS( 1000 ) ;
@@ -229,6 +264,28 @@ int FlashLED( int led, int status ){
             vTaskDelayUntil( &xLastWakeTime, xPeriod );
             status = 1;
         }
+    }
+}
+/*
+-----------------------------------------------------------------------------------------
+*/
+
+/*
+    CPU Usage
+*/
+void vApplicationIdleHook( void ){
+    TickType_t curr = xTaskGetTickCount();
+    idleTask += xTaskGetTickCount() - curr;
+}
+
+void cpuUsage( void *pvParmeters ){
+    float cpuUsage = 1 - ((float) idleTask / (float) xTaskGetTickCount());
+    printf("cpu usage: %.2f\n", cpuUsage);
+    if(cpuUsage > 0.85){
+        systemHealth = 1;
+    } 
+    else if(cpuUsage <= 0.85){
+        systemHealth = 0;
     }
 }
 /*
