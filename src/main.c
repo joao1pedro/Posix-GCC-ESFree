@@ -16,16 +16,16 @@ int main( void ){
 	char *c1 = "leds";
 	char *c2 = "keypad";
 	char *c3 = "data queue";
-	//char *c4 = "web task";
-	//char *c5 = "RS232 task";
+	char *c4 = "web task";
+	char *c5 = "RS232 task";
 
 	vSchedulerInit();
 
 	vSchedulerPeriodicTaskCreate(LEDTask, "Task LEDs", configMINIMAL_STACK_SIZE, &c1, 0, &xHandle1, pdMS_TO_TICKS(0), pdMS_TO_TICKS(50), pdMS_TO_TICKS(100), pdMS_TO_TICKS(10000));
 	vSchedulerPeriodicTaskCreate(KeyScanTask, "Task KeyPad", configMINIMAL_STACK_SIZE, &c2, 1, &xHandle2, pdMS_TO_TICKS(0), pdMS_TO_TICKS(15), pdMS_TO_TICKS(100), pdMS_TO_TICKS(10000));
 	vSchedulerPeriodicTaskCreate(PlantControlTask, "Plant Task", configMINIMAL_STACK_SIZE, &c3, 2, &xHandle3, pdMS_TO_TICKS(0), pdMS_TO_TICKS(10), pdMS_TO_TICKS(100), pdMS_TO_TICKS(10000));
-	//vSchedulerPeriodicTaskCreate(WebServerTask, "Web Server Task", configMINIMAL_STACK_SIZE, &c4, 0, &xHandle4, pdMS_TO_TICKS(0), pdMS_TO_TICKS(1000), pdMS_TO_TICKS(100), pdMS_TO_TICKS(10000));
-	//vSchedulerPeriodicTaskCreate(RS232Task, "RS232 Task", configMINIMAL_STACK_SIZE, &c5, 1, &xHandle5, pdMS_TO_TICKS(0), pdMS_TO_TICKS(1000), pdMS_TO_TICKS(100), pdMS_TO_TICKS(10000));
+	vSchedulerPeriodicTaskCreate(WebServerTask, "Web Server Task", configMINIMAL_STACK_SIZE, &c4, 0, &xHandle4, pdMS_TO_TICKS(0), pdMS_TO_TICKS(1000), pdMS_TO_TICKS(100), pdMS_TO_TICKS(10000));
+	vSchedulerPeriodicTaskCreate(RS232Task, "RS232 Task", configMINIMAL_STACK_SIZE, &c5, 1, &xHandle5, pdMS_TO_TICKS(0), pdMS_TO_TICKS(1000), pdMS_TO_TICKS(100), pdMS_TO_TICKS(10000));
 	vSchedulerStart();
 	
 	for( ;; );

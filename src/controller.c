@@ -5,8 +5,8 @@ int statusLED = 1;
 
 QueueHandle_t xQueue1;
 QueueHandle_t xFieldBusQueue;
-/* QueueHandle_t xEthernetQueue;
-QueueHandle_t xRS232Queue; */
+QueueHandle_t xEthernetQueue;
+QueueHandle_t xRS232Queue;
 
 /* Plant Control Task */
 void PlantControlTask( void *pvParameters ){
@@ -16,6 +16,10 @@ void PlantControlTask( void *pvParameters ){
 
     /* Queue init */
     xQueue1 = xQueueCreate( 10, sizeof( int ) );
+    xFieldBusQueue = xQueueCreate( 10, sizeof( int ) );
+    xEthernetQueue = xQueueCreate( 10, sizeof( int ) );
+    xRS232Queue = xQueueCreate( 10, sizeof( int ) );
+
 
     if( xQueue1 == NULL )
     {
@@ -61,9 +65,6 @@ int getSensorValue1( void ){
 
     int number = rand() % (5000 - 0 + 1) + 0;
 
-    /* Queue init */
-    xFieldBusQueue = xQueueCreate( 10, sizeof( int ) );
-
     if( xFieldBusQueue == NULL )
     {
         /* Queue was not created and must not be used. */
@@ -72,8 +73,8 @@ int getSensorValue1( void ){
 
     
     xQueueSend( xFieldBusQueue, &number, MAX_COMMS_DELAY );
-    /* xQueueSend( xEthernetQueue, &number, MAX_COMMS_DELAY );
-    xQueueSend( xRS232Queue, &number, MAX_COMMS_DELAY ); */
+    xQueueSend( xEthernetQueue, &number, MAX_COMMS_DELAY );
+    xQueueSend( xRS232Queue, &number, MAX_COMMS_DELAY );
 
     return number;
 }
@@ -83,8 +84,6 @@ int getSensorValue2( void ){
 
     int number = rand() % (5000 - 0 + 1) + 0;
 
-    /* Queue init */
-    xFieldBusQueue = xQueueCreate( 10, sizeof( int ) );
 
     if( xFieldBusQueue == NULL )
     {
@@ -94,8 +93,8 @@ int getSensorValue2( void ){
 
     
     xQueueSend( xFieldBusQueue, &number, MAX_COMMS_DELAY );
-    /* xQueueSend( xEthernetQueue, &number, MAX_COMMS_DELAY );
-    xQueueSend( xRS232Queue, &number, MAX_COMMS_DELAY ); */
+    xQueueSend( xEthernetQueue, &number, MAX_COMMS_DELAY );
+    xQueueSend( xRS232Queue, &number, MAX_COMMS_DELAY );
 
     return number;
 }
@@ -105,7 +104,7 @@ int getSensorValue2( void ){
 */
 
 /* Web Server Task */
-/* void WebServerTask( void *pvParameters ){
+void WebServerTask( void *pvParameters ){
     int Data;
 
     for( ;; )
@@ -120,15 +119,15 @@ int getSensorValue2( void ){
 }
 
 void ProcessHTTPData( int Data ){
-    printf("Data Received from Web Server -> %d", Data);
-} */
+    //printf("Data Received from Web Server -> %d\n", Data);
+}
 
 /*
 -----------------------------------------------------------------------------------------
 */
 
 /* RS232 Task */
-/* void RS232Task( void *pvParameters ){
+void RS232Task( void *pvParameters ){
     int Data;
 
     for( ;; )
@@ -143,8 +142,8 @@ void ProcessHTTPData( int Data ){
 }
 
 void ProcessSerialCharacters( int Data ){
-    printf("PDA Received Data --> %d", Data);
-} */
+    //printf("PDA Received Data --> %d\n", Data);
+}
 
 /*
 -----------------------------------------------------------------------------------------
