@@ -30,7 +30,7 @@ int main( void ){
 	vSchedulerPeriodicTaskCreate(PlantControlTask, "Plant Task", configMINIMAL_STACK_SIZE, &c3, 2, &xHandle3, pdMS_TO_TICKS(0), pdMS_TO_TICKS(10), pdMS_TO_TICKS(100), pdMS_TO_TICKS(1000));
 	vSchedulerPeriodicTaskCreate(WebServerTask, "Web Server Task", configMINIMAL_STACK_SIZE, &c4, 0, &xHandle4, pdMS_TO_TICKS(0), pdMS_TO_TICKS(1000), pdMS_TO_TICKS(100), pdMS_TO_TICKS(1000));
 	vSchedulerPeriodicTaskCreate(RS232Task, "PDA Task", configMINIMAL_STACK_SIZE, &c5, 1, &xHandle5, pdMS_TO_TICKS(0), pdMS_TO_TICKS(1000), pdMS_TO_TICKS(100), pdMS_TO_TICKS(1000));
-	vSchedulerPeriodicTaskCreate(cpuUsage, "CPU Task", configMINIMAL_STACK_SIZE, &c6, 1, &xHandle6, pdMS_TO_TICKS(0), pdMS_TO_TICKS(1000), pdMS_TO_TICKS(100), pdMS_TO_TICKS(1000));
+	vSchedulerPeriodicTaskCreate(cpuUsage, "CPU Task", configMINIMAL_STACK_SIZE, &c6, 1, &xHandle6, pdMS_TO_TICKS(0), pdMS_TO_TICKS(50), pdMS_TO_TICKS(100), pdMS_TO_TICKS(1000));
 
 	
 	vSchedulerStart();

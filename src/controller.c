@@ -71,8 +71,6 @@ void PlantControlTask(void *pvParameters)
             }
         }
     }
-
-    // Will never get here!
 }
 
 void getSensorValue1(void)
@@ -347,7 +345,7 @@ int FlashLED(int led, int status)
 void vApplicationIdleHook(void)
 {
     TickType_t curr = xTaskGetTickCount();
-    idleTask += xTaskGetTickCount() - curr;
+    idleTask += idleTask - curr;
 }
 
 void cpuUsage(void *pvParmeters)
@@ -379,5 +377,4 @@ void initMenu(void)
     printf("\n opc = 5 --> Acesso a PDA interface\r\n");
     printf("\n opc = 6 --> Acesso a Web interface\r\n");
     printf("\n-------------------------------------\n");
-    //printf("\nO sistema iniciara em alguns segundos!\n\n");
 }
