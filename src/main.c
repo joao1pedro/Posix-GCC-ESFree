@@ -20,7 +20,6 @@ int main( void ){
 	char *c4 = "web task";
 	char *c5 = "RS232 task";
 	char *c6 = "cpu usage";
-	//char *c7 = "data sensors task";
 
 	initMenu();
 
@@ -32,7 +31,6 @@ int main( void ){
 	vSchedulerPeriodicTaskCreate(WebServerTask, "Web Server Task", configMINIMAL_STACK_SIZE, &c4, 0, &xHandle4, pdMS_TO_TICKS(0), pdMS_TO_TICKS(1000), pdMS_TO_TICKS(100), pdMS_TO_TICKS(1000));
 	vSchedulerPeriodicTaskCreate(RS232Task, "PDA Task", configMINIMAL_STACK_SIZE, &c5, 1, &xHandle5, pdMS_TO_TICKS(0), pdMS_TO_TICKS(1000), pdMS_TO_TICKS(100), pdMS_TO_TICKS(1000));
 	vSchedulerPeriodicTaskCreate(cpuUsage, "CPU Task", configMINIMAL_STACK_SIZE, &c6, 1, &xHandle6, pdMS_TO_TICKS(0), pdMS_TO_TICKS(1000), pdMS_TO_TICKS(100), pdMS_TO_TICKS(1000));
-	//vSchedulerPeriodicTaskCreate(sensorTask, "Sensors Task", configMINIMAL_STACK_SIZE, &c7, 1, &xHandle7, pdMS_TO_TICKS(0), pdMS_TO_TICKS(1000), pdMS_TO_TICKS(100), pdMS_TO_TICKS(1000));
 
 	
 	vSchedulerStart();

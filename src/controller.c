@@ -70,10 +70,6 @@ void PlantControlTask(void *pvParameters)
 
             }
         }
-        else
-        {
-            printf("Sensor Queue empty\n");
-        }
     }
 
     // Will never get here!
@@ -228,6 +224,7 @@ void UpdateDisplay(char Key)
         flagWeb = 1;
         break;
     default:
+        printf("\rComando inválido!\n");
         break;
     }
 }
