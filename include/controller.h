@@ -3,7 +3,8 @@
 
 /* Plant Control  */
 #define CYCLE_RATE_MS           10
-#define MAX_COMMS_DELAY         2
+#define MAX_COMMS_DELAY         5
+//#define MAX_COMMS_DELAY         2
 
 /* Keypad Scan*/
 //#define DELAY_PERIOD_KP         4
@@ -28,14 +29,15 @@
 
 /* Plant Control Task */
 void PlantControlTask( void *pvParameters );
-int getSensorValue1( void );
-int getSensorValue2( void );  
+void getSensorValue1( void );
+void getSensorValue2( void );  
+
 /* Web Server Task */
 void WebServerTask( void *pvParameters );
-void ProcessHTTPData( int Data );
+void ProcessHTTPData( int Data, int Data2 );
 /* RS232 Task */
 void RS232Task( void *pvParameters );
-void ProcessSerialCharacters( int Data );
+void ProcessSerialCharacters( int Data, int Data2 );
 /* Keypad Scan Task */
 void KeyScanTask( void *pvParmeters );
 void UpdateDisplay( char Key );

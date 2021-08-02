@@ -12,8 +12,7 @@ int minValue1 = 1001;
 int maxValue2 = 7050;
 int minValue2 = 5001;
 
-
-QueueHandle_t xQueue1;
+//QueueHandle_t xQueue1;
 QueueHandle_t xFieldBusQueue;
 QueueHandle_t xEthernetQueue;
 QueueHandle_t xRS232Queue;
@@ -29,16 +28,16 @@ struct
 void PlantControlTask(void *pvParameters)
 {
     TickType_t xLastWakeTime;
-    //int Data1, Data2 ,sendData1, sendData2;
-    int sendData1, sendData2;
+
+    int receivedData1, receivedData2;
 
     /* Queue init */
-    xQueue1 = xQueueCreate(10, sizeof(int));
+    //xQueue1 = xQueueCreate(10, sizeof(int));
     xFieldBusQueue = xQueueCreate(10, sizeof(int));
     xEthernetQueue = xQueueCreate(10, sizeof(int));
     xRS232Queue = xQueueCreate(10, sizeof(int));
 
-    if (xQueue1 == NULL)
+    if (xFieldBusQueue == NULL)
     {
         /* Queue was not created and must not be used. */
         printf("Queue create error\n");
@@ -54,20 +53,21 @@ void PlantControlTask(void *pvParameters)
         vTaskDelayUntil(&xLastWakeTime, CYCLE_RATE_MS);
 
         // Request data from the sensors.
-        Data.Data1 = getSensorValue1();
-        Data.Data2 = getSensorValue2();
+        getSensorValue1();
+        getSensorValue2();
 
         // D
-        if (xQueueReceive(xFieldBusQueue, &sendData1, MAX_COMMS_DELAY) == pdTRUE)
+        if (xQueueReceive(xFieldBusQueue, &receivedData1, MAX_COMMS_DELAY) == pdTRUE)
         {
             // E
-            if (xQueueReceive(xFieldBusQueue, &sendData2, MAX_COMMS_DELAY) == pdTRUE)
+            if (xQueueReceive(xFieldBusQueue, &receivedData2, MAX_COMMS_DELAY) == pdTRUE)
             {
                 //TransmitResults();
-                xQueueSend(xQueue1, &Data.Data1, MAX_COMMS_DELAY);
-                xQueueSend(xQueue1, &Data.Data2, MAX_COMMS_DELAY);
+                xQueueSend(xEthernetQueue, &receivedData1, MAX_COMMS_DELAY);
+                xQueueSend(xRS232Queue, &receivedData1, MAX_COMMS_DELAY);
+                xQueueSend(xEthernetQueue, &receivedData2, MAX_COMMS_DELAY);
+                xQueueSend(xRS232Queue, &receivedData2, MAX_COMMS_DELAY);
 
-                //printf("sensor 1: %d, sensor 2: %d\n", Data.Data1, Data.Data2);
             }
         }
         else
@@ -79,7 +79,7 @@ void PlantControlTask(void *pvParameters)
     // Will never get here!
 }
 
-int getSensorValue1(void)
+void getSensorValue1(void)
 {
     srand((unsigned)time(NULL));
 
@@ -92,13 +92,9 @@ int getSensorValue1(void)
     }
 
     xQueueSend(xFieldBusQueue, &number, MAX_COMMS_DELAY);
-    xQueueSend(xEthernetQueue, &number, MAX_COMMS_DELAY);
-    xQueueSend(xRS232Queue, &number, MAX_COMMS_DELAY);
-
-    return number;
 }
 
-int getSensorValue2(void)
+void getSensorValue2(void)
 {
     srand((unsigned)time(NULL));
 
@@ -111,10 +107,6 @@ int getSensorValue2(void)
     }
 
     xQueueSend(xFieldBusQueue, &number, MAX_COMMS_DELAY);
-    xQueueSend(xEthernetQueue, &number, MAX_COMMS_DELAY);
-    xQueueSend(xRS232Queue, &number, MAX_COMMS_DELAY);
-
-    return number;
 }
 
 /*
@@ -124,23 +116,26 @@ int getSensorValue2(void)
 /* Web Server Task */
 void WebServerTask(void *pvParameters)
 {
-    int Data;
+    int data, data2;
 
     for (;;)
     {
         // Block until data arrives.  xEthernetQueue is filled by the
         // Ethernet interrupt service routine.
-        if (xQueueReceive(xEthernetQueue, &Data, portMAX_DELAY) == pdTRUE)
+        if (xQueueReceive(xEthernetQueue, &data, portMAX_DELAY) == pdTRUE)
         {
-            ProcessHTTPData(Data);
+            if (xQueueReceive(xEthernetQueue, &data2, portMAX_DELAY) == pdTRUE){
+                ProcessHTTPData(data, data2);
+            }
         }
     }
 }
 
-void ProcessHTTPData(int Data)
+void ProcessHTTPData(int Data, int Data2)
 {
-    if(flagWeb == 1){
-        printf("\nData Received from Web Server --> latest sensor data = %d \n", Data);
+    if (flagWeb == 1)
+    {
+        printf("\nData Received from Web Server --> \n\tlatest sensor1 data: %d, sensor2 data: %d\n", Data, Data2);
         flagWeb = 0;
     }
 }
@@ -152,25 +147,27 @@ void ProcessHTTPData(int Data)
 /* RS232 Task */
 void RS232Task(void *pvParameters)
 {
-    int Data, count;
-
-    count = 0;
+    int data, data2;
 
     for (;;)
     {
         // Block until data arrives.  xRS232Queue is filled by the
-        // RS232 interrupt service routine.
-        if (xQueueReceive(xRS232Queue, &Data, portMAX_DELAY) == pdTRUE)
+        // RS232 interrupt service routine.  
+        if (xQueueReceive(xRS232Queue, &data, portMAX_DELAY) == pdTRUE)
         {
-            ProcessSerialCharacters(Data);
+            if (xQueueReceive(xRS232Queue, &data2, portMAX_DELAY) == pdTRUE) {
+                ProcessSerialCharacters(data, data2);
+            }
+                
         }
     }
 }
 
-void ProcessSerialCharacters(int Data)
+void ProcessSerialCharacters(int Data, int Data2)
 {
-    if(flagPDA == 1){
-        printf("\nPDA Received Data --> latest sensor data = %d\n", Data);
+    if (flagPDA == 1)
+    {
+        printf("\nPDA Received Data --> \n\tlatest sensor1 data: %d, sensor2 data: %d\n", Data, Data2);
         flagPDA = 0;
     }
 }
@@ -192,7 +189,6 @@ void KeyScanTask(void *pvParmeters)
         // Wait for the next cycle.
         vTaskDelayUntil(&xLastWakeTime, DELAY_PERIOD_KP);
 
-        UpdateDisplay(Key);
         // Scan the keyboard.
         if (kbhit())
         {
@@ -200,40 +196,41 @@ void KeyScanTask(void *pvParmeters)
 
             Key = getchar();
 
-            switch (Key)
-            {
-            case '1':
-                ecoMode();
-                break;
-            case '2':
-                defaultMode();
-                break;
-            case '3':
-                turboMode();
-                break;
-            case '4':
-                UpdateDisplay(Key);
-                break;
-            case '5':
-                flagPDA = 1;
-                break;
-            case '6':
-                flagWeb = 1;
-                break;
-            default:
-                break;
-            }
+            UpdateDisplay(Key);
         }
     }
 }
 
 void UpdateDisplay(char Key)
 {
-    
-    if(Key == '4')
+    int data1, data2;
+    switch (Key)
+    {
+    case '1':
+        ecoMode();
+        break;
+    case '2':
+        defaultMode();
+        break;
+    case '3':
+        turboMode();
+        break;
+    case '4':
         printf("\ncpu usage: %.2f% \n", cpuMeansure * 100);
+        xQueueReceive(xFieldBusQueue, &data1, pdMS_TO_TICKS(1));
+        xQueueReceive(xFieldBusQueue, &data2, pdMS_TO_TICKS(1));
+        printf("\ndata sensor 1: %d, data sensor 2 %d\n", data1, data2);
+        break;
+    case '5':
+        flagPDA = 1;
+        break;
+    case '6':
+        flagWeb = 1;
+        break;
+    default:
+        break;
+    }
 }
-
 
 void ecoMode()
 {
@@ -244,8 +241,8 @@ void ecoMode()
     printf("\n---- engine switch to ECO mode ----\n");
     maxValue1 = maxValue;
     minValue1 = minValue;
-    maxValue2 = maxValue+2050;
-    minValue2 = minValue+1025;
+    maxValue2 = maxValue + 2050;
+    minValue2 = minValue + 1025;
 }
 
 void defaultMode()
@@ -257,8 +254,8 @@ void defaultMode()
     printf("\n---- engine switch to DEFAULT mode ----\n");
     maxValue1 = maxValue;
     minValue1 = minValue;
-    maxValue2 = maxValue+2050;
-    minValue2 = minValue+1025;
+    maxValue2 = maxValue + 2050;
+    minValue2 = minValue + 1025;
 }
 
 void turboMode()
@@ -270,8 +267,8 @@ void turboMode()
     printf("\n---- engine switch to Turbo mode ----\n");
     maxValue1 = maxValue;
     minValue1 = minValue;
-    maxValue2 = maxValue+2050;
-    minValue2 = minValue+1025;
+    maxValue2 = maxValue + 2050;
+    minValue2 = minValue + 1025;
 }
 
 /*
@@ -359,8 +356,7 @@ void vApplicationIdleHook(void)
 void cpuUsage(void *pvParmeters)
 {
     cpuMeansure = 1 - ((float)idleTask / (float)xTaskGetTickCount());
-    //printf("|cpu usage: %.2f% |", cpuUsage * 100);
-    
+
     if (cpuMeansure > 0.85)
     {
         systemHealth = 1;
@@ -374,8 +370,9 @@ void cpuUsage(void *pvParmeters)
 -----------------------------------------------------------------------------------------
 */
 
-void initMenu( void ){
-    printf( "Hello from Freertos\r\n" );
+void initMenu(void)
+{
+    printf("Hello from Freertos\r\n");
     printf("\n-------------------------------------\n");
     printf("\n Menu de opções do sistema\r\n");
     printf("\n opc = 1 --> Motor modo econômico\r\n");
@@ -385,5 +382,5 @@ void initMenu( void ){
     printf("\n opc = 5 --> Acesso a PDA interface\r\n");
     printf("\n opc = 6 --> Acesso a Web interface\r\n");
     printf("\n-------------------------------------\n");
-    printf("\nO sistema iniciara em alguns segundos!\n\n");
+    //printf("\nO sistema iniciara em alguns segundos!\n\n");
 }
